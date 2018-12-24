@@ -1,7 +1,6 @@
 [package]
-name = "channel"
+name = "sleep_sort"
 version = "0.1.0"
 authors = ["cipepser <respepic@gmail.com>"]
 
 [dependencies]
-rand = "0.6.1"
