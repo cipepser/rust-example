@@ -83,3 +83,5 @@ Cargo.lock
 
 # Local
 .DS_Store
+.idea/
+target/
