@@ -182,7 +182,22 @@ unsafe {
 }
 ```
 
+実装は`vec.rs`の`deref`（以下）を参考にした。
 
+```rust
+#[stable(feature = "rust1", since = "1.0.0")]
+impl<T> ops::Deref for Vec<T> {
+    type Target = [T];
+
+    fn deref(&self) -> &[T] {
+        unsafe {
+            let p = self.buf.ptr();
+            assume(!p.is_null());
+            slice::from_raw_parts(p, self.len)
+        }
+    }
+}
+```
 
 ### str
 
