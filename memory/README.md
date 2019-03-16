@@ -111,6 +111,78 @@ ff, 3, 0, 0,
 
 ### Vec<u8>
 
+次に`Vec<u8>`を見ていく。
+これはfat pointerになっているはず。
+
+```rust
+let a = vec![1, 2, 3, 4];
+println!("{:?}", a);
+println!("{:x?}", as_raw_bytes(&a));
+```
+
+結果
+
+```
+// 改行とスペースを入れる整形は手動
+[1, 2, 3, 4]
+[d0, 2c, c0, d5, a8, 7f, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0]
+```
+
+`vec.rs`を見てみると以下のようになっている。
+
+```rust
+#[stable(feature = "rust1", since = "1.0.0")]
+pub struct Vec<T> {
+    buf: RawVec<T>,
+    len: usize,
+}
+```
+
+`RawVec`は`raw_vec.rs`で定義されている。
+
+```
+#[allow(missing_debug_implementations)]
+pub struct RawVec<T, A: Alloc = Global> {
+    ptr: Unique<T>,
+    cap: usize,
+    a: A,
+}
+```
+
+
+また`usize`について、自分の環境では8バイト。
+```rust
+println!("size of usize: {}", std::mem::size_of::<usize>());
+// size of usize: 8
+```
+
+なので、改めて結果を見てみると後半の`4`から始まる箇所は`len`と`cap`で、最初の8バイトが実データへのポインタになっている。
+
+```
+[d0, 2c, c0, d5, a8, 7f, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0,
+  4, 0, 0, 0, 0, 0, 0, 0]
+```
+
+いよいよやりたかったヒープ上の実データをみてみる。
+
+```rust
+let a = vec![4, 1, 2, 3];
+println!("{:?}", a);
+println!("{:x?}", as_raw_bytes(&a));
+
+unsafe {
+    let p = a.as_ptr();
+    println!("{:?}", p); // 0x7feba05027c0
+    println!("{:?}", *p); // 4 <- 先頭のデータ
+    let data: &[u8] = std::slice::from_raw_parts(p, a.len()); // size_of_val使わないと1バイト長じゃないTでうまく動かないかも
+    println!("{:?}", data); // [4, 1, 2, 3]
+}
+```
+
+
 
 ### str
 
@@ -121,6 +193,10 @@ ff, 3, 0, 0,
 ### String
 
 
+### Box<u8>
+
+
 ## References
 - [Rustのvtableの内部構造 \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/18/070000)
 - [RustのSizedとfatポインタ \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/04/131311)
+- [Function std::mem::size_of \- rust-lang](https://doc.rust-lang.org/std/mem/fn.size_of.html)
