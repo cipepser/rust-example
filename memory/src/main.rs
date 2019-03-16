@@ -9,22 +9,62 @@ fn main() {
 //    println!("{:x?}", as_raw_bytes(&s));
 //    println!("{}", s.len());
 //    println!("{}", s.capacity());
+
+
+//    let a = [
+//        "a".to_string(),
+//        "ab".to_string(),
+//        "abc".to_string()];
 //
-//
-//    let a = [32768, 32768 * 2, 32768 * 4, 32768 * 8];
 //    println!("{:?}", a);
 //    println!("{:x?}", as_raw_bytes(&a));
+//
+//
+//    let a = [
+//        "a".to_string(),
+//        "ab".to_string(),
+//        "abc".to_string()];
+//
+//    println!("{:?}", a);
+//    println!("{:x?}", as_raw_bytes(&a));
+//
+//    unsafe {
+//        for i in 0..a.len() {
+//            println!("-------");
+//            let p = a[i].as_ptr();
+//            println!("{:?}", p);
+//            println!("{:?}", *p);
+//            let data = std::slice::from_raw_parts(p, a[i].len());
+//            println!("{:?}", data);
+//        }
+//    }
 
-    let a = vec![4, 1, 2, 3];
+    let a = vec![
+        "a".to_string(),
+        "bc".to_string(),
+        "def".to_string()];
     println!("{:?}", a);
+
     println!("{:x?}", as_raw_bytes(&a));
 
+    println!("****");
     unsafe {
         let p = a.as_ptr();
         println!("{:?}", p);
+
         println!("{:?}", *p);
-        let data: &[u8] = std::slice::from_raw_parts(p, a.len());
+
+        let data = std::slice::from_raw_parts(p, a.len());
         println!("{:?}", data);
+
+        for i in 0..a.len() {
+            println!("-------");
+            let p = a[i].as_ptr();
+            println!("{:?}", p);
+            println!("{:?}", *p);
+            let data = std::slice::from_raw_parts(p, a[i].len());
+            println!("{:?}", data);
+        }
     }
 }
 

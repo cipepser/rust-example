@@ -355,6 +355,128 @@ unsafe {
 
 ### String
 
+```rust
+let a = [
+    "a".to_string(),
+    "ab".to_string(),
+    "abc".to_string()]; // a: [String; 3]
+
+println!("{:?}", a);
+// ["a", "ab", "abc"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [90, 2c, c0, 4a, 9b, 7f, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, a0, 2c, c0, 4a, 9b, 7f, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, b0, 2c, c0, 4a, 9b, 7f, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+例によって整形する。
+
+```
+[90, 2c, c0, 4a, 9b, 7f, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0,
+  1, 0, 0, 0, 0, 0, 0, 0,
+ a0, 2c, c0, 4a, 9b, 7f, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+  2, 0, 0, 0, 0, 0, 0, 0,
+ b0, 2c, c0, 4a, 9b, 7f, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+`[String]`も`[&str]`と同じように3つの`String`が並んでいる。
+上述の通り`&str`は実データへのポインタと`len`を持っている。
+`String`はこれに加えて`cap`を持つ。ちょうど`Vec`に対応している。
+
+そうとなれば実データをちゃんと指しているか確認したくなる。
+
+
+```rust
+let a = [
+    "a".to_string(),
+    "ab".to_string(),
+    "abc".to_string()]; // a: Vec<String>
+
+println!("{:?}", a);
+// ["a", "ab", "abc"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [90, 2e, 40, 6f, 8c, 7f, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, a0, 2e, 40, 6f, 8c, 7f, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, b0, 2e, 40, 6f, 8c, 7f, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+
+unsafe {
+    for i in 0..a.len() {
+        println!("-------");
+        let p = a[i].as_ptr();
+        println!("{:?}", p);
+        println!("{:?}", *p);
+        let data = std::slice::from_raw_parts(p, a[i].len());
+        println!("{:?}", data);
+    }
+    // -------
+    // 0x7f8c6f402e90
+    // 97
+    // [97]
+    // -------
+    // 0x7f8c6f402ea0
+    // 97
+    // [97, 98]
+    // -------
+    // 0x7f8c6f402eb0
+    // 97
+    // [97, 98, 99]
+}
+```
+
+`Vec<String>`がどうなるのか確認しましょう。
+
+```rust
+let a = vec![
+    "a".to_string(),
+    "ab".to_string(),
+    "abc".to_string()];
+println!("{:?}", a);
+// ["a", "ab", "abc"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [a0, 2d, c0, d0, d5, 7f, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+
+unsafe {
+    let p = a.as_ptr(); // o *const String
+    println!("{:?}", p);
+    // 0x7fd5d0c02da0
+
+    println!("{:?}", *p);
+    // "a"
+
+    let data = std::slice::from_raw_parts(p, a.len()); // data: &[String]
+    println!("{:?}", data);
+    // ["a", "ab", "abc"]
+
+    for i in 0..a.len() {
+        println!("-------");
+        let p = a[i].as_ptr(); // p: *const u8
+        println!("{:?}", p);
+        println!("{:?}", *p);
+        let data = std::slice::from_raw_parts(p, a[i].len()); // data: &[u8]
+        println!("{:?}", data);
+    }
+    // -------
+    // 0x7fd5d0c02cd0
+    // 97
+    // [97]
+    // -------
+    // 0x7fd5d0c02ce0
+    // 97
+    // [97, 98]
+    // -------
+    // 0x7fd5d0c02cf0
+    // 97
+    // [97, 98, 99]
+}
+```
+
+これを見るとわかるように`a.as_ptr()`と`a[0].as_ptr()`は違うアドレスだが、同じ`"a"`を参照する。
+プログラミングRustP.78にこの参照の図がある。
+
+
 ### Box<u8>
 
 
