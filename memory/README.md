@@ -1,6 +1,16 @@
 # memory
 
-rustのメモリ表現がどうなっているか。
+## version
+
+```sh
+❯ cargo version
+cargo 1.32.0
+
+❯ rustc --version
+rustc 1.33.0
+```
+
+## rustのメモリ表現がどうなっているか
 
 [RustのSizedとfatポインタ \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/04/131311)から`as_raw_bytes`を借りる。
 
