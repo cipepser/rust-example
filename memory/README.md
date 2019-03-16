@@ -486,9 +486,53 @@ unsafe {
 これを見るとわかるように`a.as_ptr()`と`a[0].as_ptr()`は違うアドレスだが、同じ`"a"`を参照する。
 プログラミングRustP.78にこの参照の図がある。
 
+### Box
 
-### Box<u8>
+まずはBoxを触ってみる。
 
+`Display`も`Debug`も使える。
+
+```rust
+let b: Box<u8> = Box::new(1);
+println!("{}", b); // 1
+println!("{:?}", b); // 1
+```
+
+アドレスは？
+
+```rust
+let b: Box<u8> = Box::new(1);
+println!("{:x?}", as_raw_bytes(&b));
+// [90, 1, 50, d5, bc, 7f, 0, 0]
+```
+
+確かに`Box`型のサイズは`usize`と同じになる。
+ただヒープ上のデータを指すだけのポインタ。
+
+```rust
+let b: Box<u8> = Box::new(1);
+println!("{}", std::mem::size_of_val(&b)); // 8
+```
+
+`b`自身がポインタになっているので、これを参照外しすれば、実データを参照できる。
+
+```rust
+let b = Box::new("a");
+println!("{:x?}", *b); // "a"
+```
+
+また`Box`型の`Deref`も`boxed.rs`で以下のように実装されている。
+
+```rust
+#[stable(feature = "rust1", since = "1.0.0")]
+impl<T: ?Sized> Deref for Box<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &**self
+    }
+}
+```
 
 ## References
 - [Rustのvtableの内部構造 \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/18/070000)
@@ -496,3 +540,4 @@ unsafe {
 - [Function std::mem::size_of \- rust-lang](https://doc.rust-lang.org/std/mem/fn.size_of.html)
 - [char \- Rust](https://doc.rust-lang.org/std/primitive.char.html)
 - [str \- Rust](https://doc.rust-lang.org/std/primitive.str.html)
+- [生ポインタ](https://doc.rust-jp.rs/the-rust-programming-language-ja/1.6/book/raw-pointers.html)

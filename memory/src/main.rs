@@ -39,34 +39,56 @@ fn main() {
 //        }
 //    }
 
-    let a = vec![
-        "a".to_string(),
-        "bc".to_string(),
-        "def".to_string()];
-    println!("{:?}", a);
+//    let a = vec![
+//        "a".to_string(),
+//        "bc".to_string(),
+//        "def".to_string()];
+//    println!("{:?}", a);
+//
+//    println!("{:x?}", as_raw_bytes(&a));
+//
+//    println!("****");
+//    unsafe {
+//        let p = a.as_ptr();
+//        println!("{:?}", p);
+//
+//        println!("{:?}", *p);
+//
+//        let data = std::slice::from_raw_parts(p, a.len());
+//        println!("{:?}", data);
+//
+//        for i in 0..a.len() {
+//            println!("-------");
+//            let p = a[i].as_ptr();
+//            println!("{:?}", p);
+//            println!("{:?}", *p);
+//            let data = std::slice::from_raw_parts(p, a[i].len());
+//            println!("{:?}", data);
+//        }
+//    }
 
-    println!("{:x?}", as_raw_bytes(&a));
+//    let b: Box<u8> = Box::new(1);
+//    println!("{}", b);
+//    println!("{:?}", b);
+//    println!("{}", std::mem::size_of_val(&b));
 
-    println!("****");
-    unsafe {
-        let p = a.as_ptr();
-        println!("{:?}", p);
+//    println!("{:x?}", as_raw_bytes(&b));
+//    let p = as_raw_bytes(&b);
+//    let a: Vec<&str> = vec!["a"];
+//    let ptr: *const &str = a.as_ptr();
 
-        println!("{:?}", *p);
-
-        let data = std::slice::from_raw_parts(p, a.len());
-        println!("{:?}", data);
-
-        for i in 0..a.len() {
-            println!("-------");
-            let p = a[i].as_ptr();
-            println!("{:?}", p);
-            println!("{:?}", *p);
-            let data = std::slice::from_raw_parts(p, a[i].len());
-            println!("{:?}", data);
-        }
-    }
+    let b = Box::new("a");
+    println!("{:x?}", as_raw_bytes(&b));
+//    b.deref()
+//    let p = &b as *const &str;
+    println!("{:x?}", *b);
 }
+
+// slice/mod.rs:
+//    pub const fn as_ptr(&self) -> *const T {
+//        self as *const [T] as *const T
+//    }
+
 
 fn as_raw_bytes<'a, T: ?Sized>(x: &'a T) -> &'a [u8] {
     unsafe {
