@@ -177,7 +177,7 @@ unsafe {
     let p = a.as_ptr();
     println!("{:?}", p); // 0x7feba05027c0
     println!("{:?}", *p); // 4 <- 先頭のデータ
-    let data: &[u8] = std::slice::from_raw_parts(p, a.len()); // size_of_val使わないと1バイト長じゃないTでうまく動かないかも
+    let data: &[u8] = std::slice::from_raw_parts(p, a.len());
     println!("{:?}", data); // [4, 1, 2, 3]
 }
 ```
@@ -199,14 +199,161 @@ impl<T> ops::Deref for Vec<T> {
 }
 ```
 
-### str
+### [char]
+
+`[char]`でもどうなるか見てみる。
+
+```rust
+let a = ['a', 'b', 'c'];
+println!("{:?}", a);
+// ['a', 'b', 'c']
+
+println!("{:x?}", as_raw_bytes(&a));
+// [61, 0, 0, 0, 62, 0, 0, 0, 63, 0, 0, 0]
+```
+
+`[u8]`と同じでスタック上に載っている。
+
+[char \- Rust](https://doc.rust-lang.org/std/primitive.char.html)にあるように`char`は4バイト長。
+
+> `char` is always four bytes in size.
+
+`Vec<char>`はどうか。
+
+```rust
+let a = vec!['a', 'b', 'c'];
+println!("{:?}", a);
+// ['a', 'b', 'c']
+
+println!("{:x?}", as_raw_bytes(&a));
+// [d0, 2c, 40, d7, ad, 7f, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+
+unsafe {
+    let p = a.as_ptr();
+    println!("{:?}", p);
+    // 0x7fadd7402cd0
+
+    println!("{:?}", *p);
+    // 'a'
+
+    let data = std::slice::from_raw_parts(p, a.len());
+    println!("{:?}", data);
+    // ['a', 'b', 'c']
+}
+```
+
+```
+[d0, 2c, 40, d7, ad, 7f, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0,
+  3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+`len`と`cap`が`3`（うしろ2行）で、1行目はヒープにある実データへのポインタになっている。
 
 
-### &str
+### [&str]
 
+```rust
+let a = ["a", "b", "c"]; // a: [&str; 3]
+
+println!("{:?}", a);
+// ["a", "b", "c"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [82, 59, 85, 4, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 80, 59, 85, 4, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 81, 59, 85, 4, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+```
+
+別の例ももうひとつ。
+
+
+```rust
+let a = ["a", "ab", "abc"];
+println!("{:?}", a);
+// ["a", "ab", "abc"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [35, 77, 46, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 30, 77, 46, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 32, 77, 46, 1, 1, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+バイト列を見やすいように整形する。
+
+```
+[82, 59, 85, 4, 1, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0,
+ 80, 59, 85, 4, 1, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0,
+ 81, 59, 85, 4, 1, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0]
+```
+
+```
+[35, 77, 46, 1, 1, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0,
+ 30, 77, 46, 1, 1, 0, 0, 0,
+ 2, 0, 0, 0, 0, 0, 0, 0,
+ 32, 77, 46, 1, 1, 0, 0, 0,
+ 3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+
+[str \- Rust](https://doc.rust-lang.org/std/primitive.str.html)にあるように`&str`は実データへのポインタと`len`でできている。
+
+> A &str is made up of two components: a pointer to some bytes, and a length.
+
+今回の表示した対象は`[&str]`である。つまり、`&str`のスライス。
+`[u8]`でみたようにスライスはスタック上にデータをそのまま載せる。
+
+そして`&str`は上述の通り、実データへのポインタと`len`で表現される。
+よって上記のような結果（ポインタ＋`len`が3つ並ぶ）となった。
+
+最初がポインタであることも確かめておく。
+
+```rust
+let a = ["a", "ab", "abc"];
+println!("{:?}", a);
+// ["a", "ab", "abc"]
+
+println!("{:x?}", as_raw_bytes(&a));
+// [55, 8e, f9, 7, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 50, 8e, f9, 7, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 52, 8e, f9, 7, 1, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+
+unsafe {
+    for i in 0..a.len() {
+        println!("-------");
+        let p = a[i].as_ptr();
+        println!("{:?}", p);
+        println!("{:?}", *p);
+        let data = std::slice::from_raw_parts(p, a[i].len());
+        println!("{:?}", data);
+    }
+    // -------
+    // 0x107f98e55
+    // 97
+    // [97]
+    // -------
+    // 0x107f98e50
+    // 97
+    // [97, 98]
+    // -------
+    // 0x107f98e52
+    // 97
+    // [97, 98, 99]
+}
+```
+
+`println!("{:x?}", as_raw_bytes(&a));`で表示した結果を整形する。
+
+```
+[55, 8e, f9, 7, 1, 0, 0, 0,
+ 1, 0, 0, 0, 0, 0, 0, 0,
+ 50, 8e, f9, 7, 1, 0, 0, 0,
+ 2, 0, 0, 0, 0, 0, 0, 0,
+ 52, 8e, f9, 7, 1, 0, 0, 0,
+ 3, 0, 0, 0, 0, 0, 0, 0]
+```
+
+3つに分かれた各要素の先頭8バイトがデータへのポインタになっていることが確認できた。
 
 ### String
-
 
 ### Box<u8>
 
@@ -215,3 +362,5 @@ impl<T> ops::Deref for Vec<T> {
 - [Rustのvtableの内部構造 \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/18/070000)
 - [RustのSizedとfatポインタ \- 簡潔なQ](https://qnighy.hatenablog.com/entry/2017/03/04/131311)
 - [Function std::mem::size_of \- rust-lang](https://doc.rust-lang.org/std/mem/fn.size_of.html)
+- [char \- Rust](https://doc.rust-lang.org/std/primitive.char.html)
+- [str \- Rust](https://doc.rust-lang.org/std/primitive.str.html)
