@@ -77,11 +77,58 @@ fn main() {
 //    let a: Vec<&str> = vec!["a"];
 //    let ptr: *const &str = a.as_ptr();
 
-    let b = Box::new("a");
-    println!("{:x?}", as_raw_bytes(&b));
-//    b.deref()
-//    let p = &b as *const &str;
-    println!("{:x?}", *b);
+//    let b = Box::new("a");
+//    println!("{:x?}", as_raw_bytes(&b));
+////    b.deref()
+////    let p = &b as *const &str;
+//    println!("{:x?}", *b);
+//    let a: [i32; 5] = [255, 256, 1023, 1024, 1025];
+//    println!("{:?}", a);
+
+
+    let a: Vec<String> = vec![
+        "a".to_string(),
+        "ab".to_string(),
+        "abc".to_string()];
+
+    println!("{:x?}", as_raw_bytes(&a));
+// [a0, 2d, c0, d0, d5, 7f, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0]
+
+    unsafe {
+        let p = a.as_ptr(); // o *const String
+        println!("{:?}", p);
+        // 0x7fd5d0c02da0
+
+        println!("{:?}", *p);
+        // "a"
+
+        let data = std::slice::from_raw_parts(p, a.len()); // data: &[String]
+        println!("{:?}", data);
+        // ["a", "ab", "abc"]
+
+        for i in 0..a.len() {
+            println!("-------");
+            let p = a[i].as_ptr(); // p: *const u8
+            println!("{:?}", p);
+            println!("{:?}", *p);
+            println!("len: {:?}", a[i].len());
+            println!("cap: {:?}", a[i].capacity());
+            let data = std::slice::from_raw_parts(p, a[i].len()); // data: &[u8]
+            println!("{:?}", data);
+        }
+        // -------
+        // 0x7fd5d0c02cd0
+        // 97
+        // [97]
+        // -------
+        // 0x7fd5d0c02ce0
+        // 97
+        // [97, 98]
+        // -------
+        // 0x7fd5d0c02cf0
+        // 97
+        // [97, 98, 99]
+    }
 }
 
 // slice/mod.rs:
